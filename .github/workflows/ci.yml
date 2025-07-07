@@ -42,9 +42,6 @@ jobs:
         curl -f http://localhost:3002/health || exit 1
         echo "✅ Serveur API démarré avec succès"
     
-    # - name: Installation de Playwright
-    #   run: npx playwright install --with-deps
-    
     - name: Exécution des tests API
       run: npx playwright test
 
