@@ -1,0 +1,75 @@
+name: CI/CD - Tests E2E et API
+
+on:
+  push:
+    branches: [ main, develop, feature/* ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  NODE_VERSION: '18.x'
+
+jobs:
+  api-tests:
+    name: Tests API Backend
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./AUTH-E2E/back
+    
+    steps:
+    - name: Checkout du code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        cache-dependency-path: './AUTH-E2E/back/package-lock.json'
+    
+    - name: Installation des dépendances
+      run: npm ci
+    
+    - name: Démarrage du serveur API en arrière-plan
+      run: |
+        npm start &
+        sleep 10  # Attendre que le serveur démarre
+    
+    - name: Vérification de l'état du serveur
+      run: |
+        curl -f http://localhost:3002/health || exit 1
+        echo "✅ Serveur API démarré avec succès"
+    
+    # - name: Installation de Playwright
+    #   run: npx playwright install --with-deps
+    
+    - name: Exécution des tests API
+      run: npx playwright test
+
+  web-e2e-tests:
+    name: Tests E2E Interface Web
+    runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        working-directory: ./AUTH-E2E/front
+    
+    steps:
+    - name: Checkout du code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: Installation des dépendances
+      run: npm ci
+    
+    - name: Installation de Playwright
+      run: npx playwright install --with-deps
+    
+    - name: Exécution des tests E2E interface web
+      run: npx playwright test tests/registration.spec.js
